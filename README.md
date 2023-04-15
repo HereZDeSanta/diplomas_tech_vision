@@ -1,0 +1,1 @@
+# diplomas_tech_vision
