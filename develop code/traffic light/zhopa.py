@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 
-red_lower = ([0, 0, 200], dtype="uint8")
+red_lower = ([0, 0, 200])
 red_upper = np.array([15, 50, 255], dtype="uint8")
 yellow_lower = np.array ([20, 100, 100], dtype="uint8")
 yellow_upper = np.array([30, 255, 255], dtype="uint8")

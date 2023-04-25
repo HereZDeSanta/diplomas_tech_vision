@@ -62,90 +62,74 @@
 import cv2
 import numpy as np
 
-# Load video file or webcam
-cap = cv2.VideoCapture('test3.mp4')
-percent = 70
-# Define ROI coordinates
-roi_x = 440
-roi_y = 400
-roi_width = 90
-roi_height = 120
+cap = cv2.VideoCapture('3.mp4')
+percent = 100
 
-# Define color ranges for red, yellow, and green traffic lights in the HSV color space
-red_lower = np.array([0, 137, 249])
-red_upper = np.array([15, 255, 255])
-yellow_lower = np.array([17, 165, 130])
-yellow_upper = np.array([101, 255, 255])
-green_lower = np.array([40, 85, 180])
-green_upper = np.array([91, 255, 255])
+roi_x = 330
+roi_y = 430
+roi_width = 90
+roi_height = 110
+
+red_lower = np.array([0, 137, 249], dtype="uint8")
+red_upper = np.array([15, 255, 255], dtype="uint8")
+yellow_lower = np.array([17, 165, 130], dtype="uint8")
+yellow_upper = np.array([101, 255, 255], dtype="uint8")
+green_lower = np.array([40, 85, 180], dtype="uint8")
+green_upper = np.array([91, 255, 255], dtype="uint8")
 
 while True:
-    # Read frame from video file or webcam
     ret, frame = cap.read()
     width = int(frame.shape[1] * percent / 100)
     height = int(frame.shape[0] * percent / 100)
     dim = (width, height)
     frame = cv2.resize(frame, dim)
 
-    # If frame cannot be read, break loop
     if not ret:
         break
 
-    # Crop the frame to the ROI
     roi_frame = frame[roi_y:roi_y+roi_height, roi_x:roi_x+roi_width]
 
-    # Convert the ROI to the HSV color space
     hsv_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2HSV)
 
-    # Threshold the ROI based on the red, yellow, and green color ranges
     red_mask = cv2.inRange(hsv_frame, red_lower, red_upper)
     yellow_mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
     green_mask = cv2.inRange(hsv_frame, green_lower, green_upper)
 
-    # Combine the red, yellow, and green masks
     mask = cv2.bitwise_or(red_mask, yellow_mask)
     mask = cv2.bitwise_or(mask, green_mask)
 
-    # Find contours in the mask
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Draw a rectangle around the ROI
     cv2.rectangle(frame, (roi_x, roi_y), (roi_x+roi_width, roi_y+roi_height), (0, 255, 0), 2)
 
-    # Iterate through the contours
+
     for contour in contours:
-        # Calculate the area and centroid of each contour
         area = cv2.contourArea(contour)
         x, y, w, h = cv2.boundingRect(contour)
         centroid_x = int(x + w/2)
         centroid_y = int(y + h/2)
 
-        # Ignore small contours
         if area < 100:
             continue
 
-        # Determine the color of the contour based on its position in the ROI and its average color in the HSV color space
-        # if centroid_x < roi_width/3:
-        #     color = 'red'
-        #     avg_color = np.mean(hsv_frame[y:y+h, x:x+w], axis=(0,1))
-        # elif centroid_x < roi_width*1/3:
-        #     color = 'yellow'
-        #     avg_color = np.mean(hsv_frame[y:y+h, x:x+w], axis=(0,1))
-        # else:
-        #     color = 'green'
-        #     avg_color = np.mean(hsv_frame[y:y+h, x:x+w], axis=(0,1))
+        if centroid_x < roi_width/3:
+            color = 'red'
+            avg_color = np.mean(hsv_frame[y:y+h, x:x+w], axis=(0,1))
+        elif centroid_x < roi_width*1/3:
+            color = 'yellow'
+            avg_color = np.mean(hsv_frame[y:y+h, x:x+w], axis=(0,1))
+        else:
+            color = 'green'
+            avg_color = np.mean(hsv_frame[y:y+h, x:x+w], axis=(0,1))
 
-        # Draw a rectangle and label for each traffic light
         cv2.rectangle(frame, (roi_x+x, roi_y+y), (roi_x+x+w, roi_y+y+h), (0, 0, 255), 2)
-        # Draw label for each traffic light
-        # cv2.putText(frame, color, (roi_x + x, roi_y + y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        cv2.putText(frame, color, (roi_x + x, roi_y + y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-    # Display the frame
     cv2.imshow('Traffic Light Detector', frame)
     cv2.imshow('ROI', roi_frame)
     cv2.imshow('HSV', mask)
 
-    # Press 'q' to quit
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+cap.release()
+cv2.destroyAllWindows()
